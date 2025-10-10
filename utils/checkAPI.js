@@ -15,7 +15,7 @@ async function checkBaseUrl() {
     return {
       endpoint: settings.BASE_URL,
       message:
-        "Nếu api thay đổi vui lòng liên hệ nhóm tele Airdrop Hunter Siêu Tốc (https://t.me/airdrophuntersieutoc) để biết thêm thông tin và cập nhật!| Have any issuess, please contact: https://t.me/airdrophuntersieutoc",
+        "Paid Script By MRPTech",
     };
   }
 }
@@ -30,14 +30,14 @@ async function getBaseApi(url) {
       return {
         endpoint: null,
         message:
-          "Nếu api thay đổi vui lòng liên hệ nhóm tele Airdrop Hunter Siêu Tốc (https://t.me/airdrophuntersieutoc) để biết thêm thông tin và cập nhật!| Have any issuess, please contact: https://t.me/airdrophuntersieutoc",
+          "Paid Script By MRPTech",
       };
     }
   } catch (e) {
     return {
       endpoint: null,
       message:
-        "Nếu api thay đổi vui lòng liên hệ nhóm tele Airdrop Hunter Siêu Tốc (https://t.me/airdrophuntersieutoc) để biết thêm thông tin và cập nhật!| Have any issuess, please contact: https://t.me/airdrophuntersieutoc",
+        "Paid Script By MRPTech",
     };
   }
 }
