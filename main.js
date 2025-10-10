@@ -213,7 +213,7 @@ class ClientAPI {
           return { success: false, status: error.status, error: errorMessage, data: null };
         }
         if (error.status === 400) {
-          this.log(`Invalid request for ${url}, maybe have new update from server | contact: https://t.me/airdrophuntersieutoc to get new update!`, "error");
+          this.log(`Invalid request for ${url}, maybe have new update from server | contact: https://t.me/mrptechofficial to get new update!`, "error");
           return { success: false, status: error.status, error: errorMessage, data: null };
         }
         if (error.status === 429) {
