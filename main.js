@@ -3,6 +3,7 @@ const path = require("path");
 const axios = require("axios");
 const colors = require("colors");
 const { HttpsProxyAgent } = require("https-proxy-agent");
+const { SocksProxyAgent } = require("socks-proxy-agent");
 const readline = require("readline");
 const user_agents = require("./config/userAgents");
 const settings = require("./config/config.js");
@@ -97,6 +98,19 @@ class ClientAPI {
     this.headers["User-Agent"] = this.#get_user_agent();
   }
 
+  createProxyAgent(proxyString) {
+    if (!proxyString) return null;
+
+    if (proxyString.startsWith("socks5://") || proxyString.startsWith("socks4://")) {
+      return new SocksProxyAgent(proxyString);
+    } else if (proxyString.startsWith("http://") || proxyString.startsWith("https://")) {
+      return new HttpsProxyAgent(proxyString);
+    } else {
+      // Default to HTTPS proxy agent for backward compatibility
+      return new HttpsProxyAgent(proxyString);
+    }
+  }
+
   createUserAgent() {
     try {
       this.session_name = this.itemData.key;
@@ -136,7 +150,7 @@ class ClientAPI {
 
   async checkProxyIP() {
     try {
-      const proxyAgent = new HttpsProxyAgent(this.proxy);
+      const proxyAgent = this.createProxyAgent(this.proxy);
       const response = await axios.get("https://api.ipify.org?format=json", { httpsAgent: proxyAgent });
       if (response.status === 200) {
         this.proxyIP = response.data.ip;
@@ -174,7 +188,7 @@ class ClientAPI {
 
     let proxyAgent = null;
     if (settings.USE_PROXY) {
-      proxyAgent = new HttpsProxyAgent(this.proxy);
+      proxyAgent = this.createProxyAgent(this.proxy);
     }
 
     let currRetries = 0,
@@ -369,15 +383,15 @@ class ClientAPI {
   }
 
   async connectRPC() {
-    // this.provider = new ethers.JsonRpcProvider(settings.RPC_URL, {
-    //   fetch: (url, options) => {
-    //     if (settings.USE_PROXY) options.agent = new HttpsProxyAgent(this.proxy);
-    //     return fetch(url, options);
-    //   },
-    //   chainId: Number(settings.CHAIN_ID),
-    //   name: "ETH",
-    // });
-    // this.wallet = new ethers.Wallet(this.itemData.privateKey, this.provider);
+    this.provider = new ethers.JsonRpcProvider(settings.RPC_URL, {
+      fetch: (url, options) => {
+        if (settings.USE_PROXY) options.agent = this.createProxyAgent(this.proxy);
+        return fetch(url, options);
+      },
+      chainId: Number(settings.CHAIN_ID),
+      name: "ETH",
+    });
+    this.wallet = new ethers.Wallet(this.itemData.privateKey, this.provider);
   }
 
   async runAccount() {
@@ -395,7 +409,7 @@ class ClientAPI {
       }
     }
     const timesleep = getRandomNumber(settings.DELAY_START_BOT[0], settings.DELAY_START_BOT[1]);
-    console.log(`=========Tài khoản ${accountIndex + 1} | ${this.proxyIP || "Local IP"} | Bắt đầu sau ${timesleep} giây...`.green);
+    console.log(`=========Account ${accountIndex + 1} | ${this.proxyIP || "Local IP"} | Starting after ${timesleep} seconds...`.green);
     await sleep(timesleep);
 
     const token = await this.getValidToken();
@@ -420,7 +434,7 @@ async function main() {
   let newRefreshTokens = initData;
 
   if (initData.length == 0 || (initData.length > proxies.length && settings.USE_PROXY)) {
-    console.log("Số lượng proxy và data phải bằng nhau.".red);
+    console.log("The number of proxies and data must be equal.".red);
     console.log(`Data: ${initData.length}`);
     console.log(`Proxy: ${proxies.length}`);
     process.exit(1);
@@ -431,7 +445,7 @@ async function main() {
   let maxThreads = settings.USE_PROXY ? settings.MAX_THEADS : settings.MAX_THEADS_NO_PROXY;
 
   const resCheck = await checkBaseUrl();
-  if (!resCheck.endpoint) return console.log(`Không thể tìm thấy ID API, có thể lỗi kết nỗi, thử lại sau!`.red);
+  if (!resCheck.endpoint) return console.log(`Cannot find API ID, possibly connection error, try again later!`.red);
   console.log(`${resCheck.message}`.yellow);
 
   console.log(`Initing data...`.blue);
@@ -469,7 +483,7 @@ async function main() {
     } catch (error) {}
 
     await sleep(5);
-    console.log(`=============${new Date().toLocaleString()} | Hoàn thành tất cả tài khoản | Chờ ${settings.TIME_SLEEP} phút=============`.magenta);
+    console.log(`=============${new Date().toLocaleString()} | Completed all accounts | Waiting ${settings.TIME_SLEEP} minutes=============`.magenta);
     showBanner();
     await sleep(settings.TIME_SLEEP * 60);
   }
@@ -477,7 +491,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.log("Lỗi rồi:", error);
+    console.log("Error:", error);
     process.exit(1);
   })
   .finally(() => {});
